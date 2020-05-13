@@ -11,15 +11,14 @@
 #include <avisynth.h>
 
 #define CMASK_VERSION "1.1.1"
-
+#define __AVX2__
 
 typedef IScriptEnvironment ise_t;
 
-
-enum arch_t {
-    NO_SIMD = 0,
-    USE_SSE2 = 1,
-    USE_AVX2 = 2,
+enum class arch_t {
+    NO_SIMD,
+    USE_SSE2,
+    USE_AVX2,
 };
 
 
@@ -39,9 +38,10 @@ protected:
     bool isPlus;
     int numPlanes;
     size_t align;
+    bool has_at_least_v8;
 
     GVFmod(PClip c, bool chroma, arch_t a, bool ip) :
-        GenericVideoFilter(c), align(a == USE_AVX2 ? 32 : 16), isPlus(ip) 
+        GenericVideoFilter(c), align(a == arch_t::USE_AVX2 ? 32 : 16), isPlus(ip) 
     {
         numPlanes = (vi.IsY8() || !chroma) ? 1 : 3;
     }
@@ -79,7 +79,7 @@ class CombMask : public GVFmod {
 
 public:
     CombMask(PClip c, int cth, int mth, bool chroma, arch_t arch, bool expand,
-             int metric, bool is_avsplus);
+             int metric, bool is_avsplus, ise_t *env);
     ~CombMask();
     PVideoFrame __stdcall GetFrame(int n, ise_t* env);
 };
@@ -105,7 +105,7 @@ class MaskedMerge : public GVFmod {
 
 public:
     MaskedMerge(PClip c, PClip a, PClip m, int mi, int blockx, int blocky,
-                bool chroma, arch_t arch, bool is_avsplus);
+                bool chroma, arch_t arch, bool is_avsplus, ise_t *env);
     ~MaskedMerge() {}
     PVideoFrame __stdcall GetFrame(int n, ise_t* env);
 };
@@ -123,22 +123,21 @@ static inline void validate(bool cond, const char* msg)
 static inline void*
 alloc_buffer(size_t size, size_t align, bool is_avsplus, ise_t* env)
 {
-    if (is_avsplus) {
-        return static_cast<IScriptEnvironment2*>(
-            env)->Allocate(size, align, AVS_POOLED_ALLOC);
-    }
-    return _aligned_malloc(size, align);
+        bool has_at_least_v8 = true;
+        try { env->CheckVersion(8); }
+        catch (const AvisynthError&) { has_at_least_v8 = false; }
+        if (has_at_least_v8) return env->Allocate(size, align, AVS_POOLED_ALLOC); return _aligned_malloc(size, align);
 }
 
 
 static inline void
 free_buffer(void* buff, bool is_avsplus, ise_t* env)
 {
-    if (is_avsplus) {
-        static_cast<IScriptEnvironment2*>(env)->Free(buff);
-        return;
-    }
-    _aligned_free(buff);
+        bool has_at_least_v8 = true;
+        try { env->CheckVersion(8); }
+        catch (const AvisynthError&) { has_at_least_v8 = false; }
+        if (has_at_least_v8) { env->Free(buff); return; }
+        _aligned_free(buff);
 }
 
 #endif

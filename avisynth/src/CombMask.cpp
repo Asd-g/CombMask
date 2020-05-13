@@ -360,10 +360,13 @@ Buffer::~Buffer()
 
 
 CombMask::CombMask(PClip c, int cth, int mth, bool ch, arch_t arch, bool e,
-                   int metric, bool plus) :
+                   int metric, bool plus, ise_t* env) :
     GVFmod(c, ch, arch, plus), cthresh(cth), mthresh(mth), expand(e),
     buff(nullptr)
 {
+    has_at_least_v8 = true;
+    try { env->CheckVersion(8); } catch (const AvisynthError&) { has_at_least_v8 = false; }
+
     validate(!vi.IsPlanar(), "planar format only.");
     validate(metric != 0 && metric != 1, "metric must be set to 0 or 1.");
     if (metric == 0) {
@@ -385,7 +388,7 @@ CombMask::CombMask(PClip c, int cth, int mth, bool ch, arch_t arch, bool e,
 
     switch (arch) {
 #if defined(__AVX2__)
-    case USE_AVX2:
+    case arch_t::USE_AVX2:
         writeCombMask = metric == 0 ? comb_mask_0_simd<__m256i>
                       : comb_mask_1_simd<__m256i>;
         writeMotionMask = motion_mask_simd<__m256i>;
@@ -393,7 +396,7 @@ CombMask::CombMask(PClip c, int cth, int mth, bool ch, arch_t arch, bool e,
         expandMask = expand_mask_simd<__m256i>;
         break;
 #endif
-    case USE_SSE2:
+    case arch_t::USE_SSE2:
         writeCombMask = metric == 0 ? comb_mask_0_simd<__m128i>
                       : comb_mask_1_simd<__m128i>;
         writeMotionMask = motion_mask_simd<__m128i>;
@@ -436,7 +439,8 @@ PVideoFrame __stdcall CombMask::GetFrame(int n, ise_t* env)
     PVideoFrame prev = mthresh == 0 ? PVideoFrame() 
                      : child->GetFrame(std::max(n - 1, 0), env);
 
-    PVideoFrame dst = env->NewVideoFrame(vi, align);
+    PVideoFrame dst;
+    if (has_at_least_v8) dst = env->NewVideoFrameP(vi, &src, align); else dst = env->NewVideoFrame(vi, align);
 
     Buffer* b = buff;
     uint8_t *buffp, *tmpp;

@@ -5,8 +5,8 @@
 *.opendb
 *.filters
 *.user
-avisynth/vs2015/.vs/*
-avisynth/vs2015/Debug/*
-avisynth/vs2015/Release/*
-avisynth/vs2015/x64/*
+avisynth/build/.vs/*
+avisynth/build/Debug/*
+avisynth/build/Release/*
+avisynth/build/x64/*
 avisynth/archives/*

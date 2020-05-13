@@ -34,16 +34,16 @@ check_combed_simd(PVideoFrame& cmask, int mi, int blockx, int blocky,
                 // 0xFF == -1, thus the range of each bytes of sum is -8 to 0.
                 V sum = load<V>(srcp + x);
                 sum = add_i8(sum, load<V>(srcp + x + pitch * 1));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 2));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 3));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 4));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 5));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 6));
-                sum = add_i8(sum, load<V>(srcp + x + pitch * 7));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(2)));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(3)));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(4)));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(5)));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(6)));
+                sum = add_i8(sum, load<V>(srcp + x + pitch * static_cast<int64_t>(7)));
                 sum = sad_u8(sub_i8(zero, sum), zero);
                 store(arr + x + pitch_a * j, sum);
             }
-            srcp += pitch * 8;
+            srcp += pitch * static_cast<int64_t>(8);
         }
 
         for (int xx = 0; xx < length; xx += stepx) {
@@ -85,7 +85,7 @@ check_combed_c(PVideoFrame& cmask, int mi, int blockx, int blocky, bool, ise_t*)
                 return true;
             }
         }
-        srcp += pitch * blocky;
+        srcp += static_cast<int64_t>(pitch) * blocky;
     }
     return false;
 }
@@ -171,11 +171,11 @@ check_combed_t get_check_combed(arch_t arch)
 {
 
 #if defined(__AVX2__)
-    if (arch == USE_AVX2) {
+    if (arch == arch_t::USE_AVX2) {
         return check_combed_simd<__m256i>;
     }
 #endif
-    if (arch == USE_SSE2) {
+    if (arch == arch_t::USE_SSE2) {
         return check_combed_simd<__m128i>;
     }
     return check_combed_c;
@@ -185,10 +185,14 @@ check_combed_t get_check_combed(arch_t arch)
 
 MaskedMerge::
 MaskedMerge(PClip c, PClip a, PClip m, int _mi, int bx, int by, bool chroma,
-            arch_t arch, bool ip) :
+            arch_t arch, bool ip, ise_t* env) :
     GVFmod(c, chroma, arch, ip), altc(a), maskc(m), mi(_mi), blockx(bx),
     blocky(by)
 {
+    has_at_least_v8 = true;
+    try { env->CheckVersion(8); }
+    catch (const AvisynthError&) { has_at_least_v8 = false; }
+
     validate(!vi.IsPlanar(), "planar format only.");
     validate(mi < 0 || mi > 128, "mi must be between 0 and 128.");
     validate(blockx < 8 || blockx > 32 || blockx % 8 > 0,
@@ -206,11 +210,11 @@ MaskedMerge(PClip c, PClip a, PClip m, int _mi, int bx, int by, bool chroma,
 
     switch (arch) {
 #if defined(__AVX2__)
-    case USE_AVX2:
+    case arch_t::USE_AVX2:
         mergeFrames = merge_frames_simd<__m256i>;
         break;
 #endif
-    case USE_SSE2:
+    case arch_t::USE_SSE2:
         mergeFrames = merge_frames_simd<__m128i>;
         break;
     default:
@@ -230,7 +234,8 @@ PVideoFrame __stdcall MaskedMerge::GetFrame(int n, ise_t* env)
     }
 
     PVideoFrame alt = altc->GetFrame(n, env);
-    PVideoFrame dst = env->NewVideoFrame(vi);
+    PVideoFrame dst;
+    if (has_at_least_v8) dst = env->NewVideoFrameP(vi, &src); else dst = env->NewVideoFrame(vi);
 
     mergeFrames(numPlanes, src, alt, mask, dst);
 
