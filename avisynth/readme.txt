@@ -124,8 +124,6 @@ syntax:
 
 
 note:
-
-    - CombMask_avx2.dll is compiled with /arch:AVX2.
     
     - On Avisynth2.6, AVX2 can not to be enabled even if you use CombMask_avx2.dll.
     
@@ -157,7 +155,7 @@ reqirement:
 
     - Avisynth2.60 or later / Avisynth+ r2005 or greater.
     - Windows Vista sp2 / 7 sp1 / 8.1 / 10.
-    - Microsoft Visual C++ 2015 Redistributable Package
+    - Microsoft Visual C++ 2019 Redistributable Package
     - SSE2 capable CPU
 
 
