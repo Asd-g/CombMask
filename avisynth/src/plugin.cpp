@@ -2,7 +2,7 @@
 
 
 
-static arch_t get_arch(int opt, bool is_avsplus, ise_t* env)
+static arch_t get_arch(int opt, ise_t* env)
 {
     const bool has_sse2 = env->GetCPUFlags() & CPUF_SSE2;
     const bool has_avx2 = env->GetCPUFlags() & CPUF_AVX2;
@@ -13,7 +13,7 @@ static arch_t get_arch(int opt, bool is_avsplus, ise_t* env)
 #if !defined(__AVX2__)
     return USE_SSE2;
 #else
-    if (opt == 1 || !has_avx2 || !is_avsplus) {
+    if (opt == 1 || !has_avx2) {
         return arch_t::USE_SSE2;
     }
     return arch_t::USE_AVX2;
@@ -33,7 +33,7 @@ create_combmask(AVSValue args, void* user_data, ise_t* env)
     bool ch = args[CHROMA].AsBool(true);
     bool expand = args[EXPAND].AsBool(true);
     bool is_avsplus = env->FunctionExists("SetFilterMTMode");
-    arch_t arch = get_arch(args[OPT].AsInt(-1), is_avsplus, env);
+    arch_t arch = get_arch(args[OPT].AsInt(-1), env);
 
     try{
         return new CombMask(clip, cth, mth, ch, arch, expand, metric, is_avsplus, env);
@@ -64,7 +64,7 @@ create_maskedmerge(AVSValue args, void*, IScriptEnvironment* env)
         int by = args[BLOCKY].AsInt(8);
         bool ch = args[CHROMA].AsBool(true);
         bool is_avsplus = env->FunctionExists("SetFilterMTMode");
-        arch_t arch = get_arch(args[OPT].AsInt(-1), is_avsplus, env);
+        arch_t arch = get_arch(args[OPT].AsInt(-1), env);
 
         return new MaskedMerge(base, alt, mask, mi, bx, by, ch, arch, is_avsplus, env);
     } catch (std::runtime_error& e) {
@@ -94,7 +94,7 @@ create_iscombed(AVSValue args, void*, ise_t* env)
         int blockx = args[BLOCKX].AsInt(16);
         int blocky = args[BLOCKY].AsInt(16);
         bool is_avsplus = env->FunctionExists("SetFilterMTMode");
-        arch_t arch = get_arch(args[OPT].AsInt(-1), is_avsplus, env);
+        arch_t arch = get_arch(args[OPT].AsInt(-1), env);
 
         validate(mi < 0 || mi > 128, "MI must be between 0 and 128.");
         validate(blockx != 8 && blockx != 16 && blockx != 32,

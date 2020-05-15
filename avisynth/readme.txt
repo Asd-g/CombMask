@@ -125,8 +125,6 @@ syntax:
 
 note:
     
-    - On Avisynth2.6, AVX2 can not to be enabled even if you use CombMask_avx2.dll.
-    
     - On Avisynth+MT, CombMask and MaskedMerge are set as MT_NICE_FILTER automatically.
     
     - This plugin's filters require appropriate memory alignments.
