@@ -1,15 +1,15 @@
-CombMask - Combmask create filter for Avisynth2.6x/Avisynth+
+CombMask - Combmask2 create filter for Avisynth2.6x/Avisynth+
 
 
 description:
-    CombMask is a simple filter that creates a comb mask that can (could) be
+    CombMask2 is a simple filter that creates a comb mask that can (could) be
     used by other filters like MaskTools2.
     The mask consists of binaries of 0(not combed) and 255(combed).
 
-    MaskedMerge is an exclusive masking filter for CombMask. This is often faster
+    MaskedMerge2 is an exclusive masking filter for CombMask. This is often faster
     than MaskTools2's mt_merge().
 
-    IsCombed is a is a utility function that can be used within AviSynth's
+    IsCombed2 is a is a utility function that can be used within AviSynth's
     conditionalfilter to test whether or not a frame is combed and returns true
     if it is and false if it isn't.
 
@@ -18,7 +18,7 @@ description:
 
 
 syntax:
-    CombMask(clip, int "cthresh", int "mthresh", bool "chroma", bool "expand",
+    CombMask2(clip, int "cthresh", int "mthresh", bool "chroma", bool "expand",
              int "metric", int opt)
 
         cthresh:
@@ -71,7 +71,7 @@ syntax:
                               When AVX2 can't be used, fallback to 1.
 
 
-    MaskedMerge(clip base, clip alt, clip mask, int "MI", int "blockx", int "blocky",
+    MaskedMerge2(clip base, clip alt, clip mask, int "MI", int "blockx", int "blocky",
                 bool "chroma", int opt)
 
         base: base clip.
@@ -102,30 +102,30 @@ syntax:
             Default is true.
 
         opt:
-            same as CombMask.
+            same as CombMask2.
 
 
-    IsCombed(clip, int "cthresh", int "mthresh",int "MI", int "blockx", int "blocky",
+    IsCombed2(clip, int "cthresh", int "mthresh",int "MI", int "blockx", int "blocky",
              int "metric", int "opt")
 
-        cthresh: Same as CombMask.
+        cthresh: Same as CombMask2.
 
-        mthresh: Same as CombMask.
+        mthresh: Same as CombMask2.
 
-        MI: Same as MaskedMerge.
+        MI: Same as MaskedMerge2.
 
-        blockx: Same as MaskedMerge.
+        blockx: Same as MaskedMerge2.
 
-        blockx: Same as MaskedMerge.
+        blockx: Same as MaskedMerge2.
 
-        metric: Same as CombMask.
+        metric: Same as CombMask2.
 
-        opt: same as CombMask.
+        opt: same as CombMask2.
 
 
 note:
     
-    - On Avisynth+MT, CombMask and MaskedMerge are set as MT_NICE_FILTER automatically.
+    - On Avisynth+MT, CombMask2 and MaskedMerge2 are set as MT_NICE_FILTER automatically.
     
     - This plugin's filters require appropriate memory alignments.
       Thus, if you want to crop the left side of your source clip before these filters,
@@ -137,8 +137,8 @@ usage:
     src = SourceFilter("foo\bar\fizz\buzz")
     deint = src.some_deinterlace_filter()
     deint2 = src.another_filter()
-    mask = deint.CombMask()
-    last = deint.MaskedMerge(deint2, mask)
+    mask = deint.CombMask2()
+    last = deint.MaskedMerge2(deint2, mask)
     return last
 
 
@@ -146,7 +146,7 @@ usage:
     src = a_YV12_clip
     combed = src.ConvertToYV16(interlaced=true)
     nocomb = src.ConvertToYV16(interlaced=false)
-    ConditionalFilter(src, combed, nocomb, "IsCombed", "=", "true")
+    ConditionalFilter(src, combed, nocomb, "IsCombed2", "=", "true")
 
 
 reqirement:
